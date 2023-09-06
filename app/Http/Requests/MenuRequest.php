@@ -36,7 +36,6 @@ class MenuRequest extends FormRequest
             'image_url' => [
                 'sometimes',
                 'image',
-                'string',
             ],
         ];
         if ($this->method() == Request::METHOD_PUT) {

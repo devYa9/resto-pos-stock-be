@@ -11,9 +11,12 @@ class MenuController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $menus = Menu::all();
+        $perPage = $request->input('per_page', 10);
+
+        $menus = Menu::paginate($perPage);
+
         return response()->json([
             'result' => $menus,
             'msg' => __('success'),
@@ -35,12 +38,19 @@ class MenuController extends Controller
     public function store(MenuRequest $request)
     {
         try {
-            $request->whenHas('image_url', function ($imageInp) use (&$request) {
-                $request->merge([
-                    'image_url' => 'storage/' . $imageInp->store('images_urls'),
-                ]);
+            $image = null;
+            $slug = $request->slug;
+
+            $request->whenHas('image_url', function ($imageInp) use (&$image, $slug) {
+                $image_name = $slug . '.' . $imageInp->getClientOriginalExtension();
+                $imageInp->storeAs('public/images_urls', $image_name);
+                $image = 'storage/images_urls/' . $image_name;
             });
-            $menu = Menu::create($request->all());
+            $menu = Menu::create([
+                ...$request->all(),
+                'image_url' => $image,
+            ]);
+
             if ($menu) {
                 $result = $menu;
                 $msg = __('success.add');
